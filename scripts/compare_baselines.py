@@ -79,7 +79,7 @@ def run_one_image(
 
     image_pil = load_image_from_path(img_path)
     mask_pil = load_image_from_path(mask_path)
-    mask_torch, _, image_torch = prepare_mask_and_masked_image(image_pil, mask_pil)
+    mask_torch, image_torch, _ = prepare_mask_and_masked_image(image_pil, mask_pil)
     image_torch = image_torch.half().cuda()
     mask_torch = mask_torch.half().cuda()
 

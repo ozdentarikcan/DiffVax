@@ -3,7 +3,6 @@
 
 import os
 import sys
-import json
 
 _script_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(_script_dir, "src"))
@@ -52,40 +51,45 @@ def load_models():
 
 
 # ---------------------------------------------------------------------------
-# Example gallery
-# ---------------------------------------------------------------------------
-def load_examples():
-    """Build list of [image_path, mask_path, prompt] for gr.Examples."""
-    meta_path = os.path.join(DATA_DIR, "validation", "metadata.jsonl")
-    if not os.path.isfile(meta_path):
-        return []
-    examples = []
-    with open(meta_path) as f:
-        for line in f:
-            row = json.loads(line)
-            img_path = os.path.join(DATA_DIR, "validation", row["file_name"])
-            mask_path = os.path.join(DATA_DIR, "validation", row["mask"])
-            if os.path.isfile(img_path) and os.path.isfile(mask_path):
-                examples.append([img_path, mask_path, row["prompts"][0]])
-            if len(examples) >= 8:
-                break
-    return examples
-
-
-# ---------------------------------------------------------------------------
 # Core pipeline
 # ---------------------------------------------------------------------------
-def run_diffvax(image_pil, mask_pil, prompt, seed):
-    """Run DiffVax immunization + editing. Returns 4 images."""
+def run_diffvax(editor_value, mask_upload, prompt, seed):
+    """Run DiffVax immunization + editing. Returns 3 images."""
     load_models()
     seed = int(seed)
 
+    # ImageEditor returns dict with "background", "layers", and "composite"
+    if editor_value is None or editor_value.get("background") is None:
+        raise gr.Error("Please upload an image first.")
+
+    image_pil = editor_value["background"].convert("RGB")
+
+    # Mask priority: uploaded mask > painted brush strokes
+    # Model expects: white (255) = edit region, black (0) = protected region
+    if mask_upload is not None:
+        mask_pil = mask_upload.convert("RGB")
+    else:
+        # User paints the PROTECTED area (black brush).
+        # Alpha channel tells us where user painted → those areas are protected.
+        # Invert so: painted (protected) = black, unpainted (edit) = white.
+        layers = editor_value.get("layers", [])
+        if layers and len(layers) > 0:
+            painted_np = np.zeros((image_pil.height, image_pil.width), dtype=np.float32)
+            for layer in layers:
+                alpha = np.array(layer.getchannel("A"), dtype=np.float32) / 255.0
+                painted_np = np.clip(painted_np + alpha, 0, 1)
+            # Invert: painted = 0 (protected), unpainted = 1 (edit region)
+            mask_np = 1.0 - painted_np
+            mask_pil = Image.fromarray((mask_np * 255).astype(np.uint8)).convert("RGB")
+        else:
+            raise gr.Error("Please paint the protected area or upload a mask image.")
+
     # Resize to 512x512 (model requirement)
-    image_pil = image_pil.convert("RGB").resize((512, 512))
-    mask_pil = mask_pil.convert("RGB").resize((512, 512))
+    image_pil = image_pil.resize((512, 512))
+    mask_pil = mask_pil.resize((512, 512))
 
     # Prepare tensors
-    mask_torch, _, image_torch = prepare_mask_and_masked_image(image_pil, mask_pil)
+    mask_torch, image_torch, _ = prepare_mask_and_masked_image(image_pil, mask_pil)
     image_torch = image_torch.half().cuda()
     mask_torch = mask_torch.half().cuda()
 
@@ -114,8 +118,6 @@ def run_diffvax(image_pil, mask_pil, prompt, seed):
 # Gradio UI
 # ---------------------------------------------------------------------------
 def build_app():
-    examples = load_examples()
-
     with gr.Blocks(
         title="DiffVax Demo",
         theme=gr.themes.Soft(),
@@ -128,8 +130,29 @@ def build_app():
 
         with gr.Row():
             with gr.Column(scale=1):
-                input_image = gr.Image(label="Input Image", type="pil", height=350)
-                input_mask = gr.Image(label="Mask (white = edit region)", type="pil", height=350)
+                editor = gr.ImageEditor(
+                    label="Input Image",
+                    type="pil",
+                    height=450,
+                    brush=gr.Brush(
+                        colors=["#000000"],
+                        default_color="#000000",
+                        default_size=30,
+                    ),
+                    eraser=gr.Eraser(default_size=30),
+                    sources=["upload"],
+                    transforms=[],
+                    layers=False,
+                )
+                gr.Markdown(
+                    "*Upload an image, then paint the area to protect "
+                    "with the brush (black = protected).*"
+                )
+                mask_upload = gr.Image(
+                    label="Or upload a mask (white = edit region, black = protected; overrides brush)",
+                    type="pil",
+                    height=200,
+                )
                 prompt = gr.Textbox(
                     label="Edit Prompt",
                     placeholder="e.g. A person in a weekend market",
@@ -148,21 +171,13 @@ def build_app():
 
         run_btn.click(
             fn=run_diffvax,
-            inputs=[input_image, input_mask, prompt, seed],
+            inputs=[editor, mask_upload, prompt, seed],
             outputs=[out_immunized, out_edited_orig, out_edited_imm],
         )
-
-        if examples:
-            gr.Markdown("### Examples (click to load)")
-            gr.Examples(
-                examples=examples,
-                inputs=[input_image, input_mask, prompt],
-                label="Validation set samples",
-            )
 
     return app
 
 
 if __name__ == "__main__":
     app = build_app()
-    app.launch(server_name="0.0.0.0", server_port=7860)
+    app.launch(server_name="0.0.0.0", server_port=7860, share=True)

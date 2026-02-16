@@ -193,7 +193,13 @@ python scripts/demo.py --run-baselines --pg-steps 200 --dg-steps 100
 
 ### Train a new model
 
-The training script automatically downloads the DiffVax dataset from Hugging Face Hub on first run.
+**Before training**, download the DiffVax dataset:
+
+```bash
+python scripts/download_dataset.py
+```
+
+This places the dataset in `data/` with the structure shown in the [Dataset](#dataset) section above. Alternatively, the training script will automatically download the dataset from Hugging Face Hub on first run if it's not present.
 
 ```bash
 python scripts/train.py \
