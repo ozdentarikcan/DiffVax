@@ -1,0 +1,23 @@
+# DiffVax training configuration
+
+# Training
+iter_num: 1000000
+learning_rate: 0.00001
+batch_size: 5
+alpha: 4
+
+# Model
+immunization_model: "diffvax"
+train_all: true
+project_name: "diffvax"
+
+# Attack model (Stable Diffusion Inpainting)
+attack_model_link: "runwayml/stable-diffusion-inpainting"
+
+# Dataset paths (relative to data_dir)
+images_subdir: "train/images"
+masks_subdir: "train/masks"
+image_prompt_json: "image_prompt_pairs_with_validation.json"
+
+# Optional: train on specific image indices only
+# image_index_list: [0]
