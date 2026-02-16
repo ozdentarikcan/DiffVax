@@ -10,7 +10,7 @@
 [Kerem Zaman](https://keremzaman.com/),
 [Shashank Srivastava](https://scholar.google.com/citations?user=-vKI5s0AAAAJ&hl=en),
 [Sandeep P. Chinchali](https://scholar.google.com/citations?user=262ASa4AAAAJ&hl=en),
-[James M. Rehg](https://scholar.google.com/citations?user=8kA3eDwAAAAJ)
+[James M. Rehg]([https://scholar.google.com/citations?user=8kA3eDwAAAAJ](https://rehg.org/))
 
 \* Equal Contribution
 
