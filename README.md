@@ -2,6 +2,7 @@
 
 [![arXiv](https://img.shields.io/badge/arXiv-2411.17957-b31b1b.svg)](https://arxiv.org/pdf/2411.17957)
 [![Project Page](https://img.shields.io/badge/Project-Page-blue)](https://diffvax.github.io/)
+[![Hugging Face](https://img.shields.io/badge/🤗%20Hugging%20Face-Dataset-yellow)](https://huggingface.co/datasets/ozdentarikcan/DiffVaxDataset)
 ![Visitors](https://visitor-badge.laobi.icu/badge?page_id=ozdentarikcan.DiffVax)
 
 [Tarik Can Ozden](https://ozdentarikcan.github.io/)\*,
@@ -10,7 +11,7 @@
 [Kerem Zaman](https://keremzaman.com/),
 [Shashank Srivastava](https://scholar.google.com/citations?user=-vKI5s0AAAAJ&hl=en),
 [Sandeep P. Chinchali](https://scholar.google.com/citations?user=262ASa4AAAAJ&hl=en),
-[James M. Rehg]([https://scholar.google.com/citations?user=8kA3eDwAAAAJ](https://rehg.org/))
+[James M. Rehg]((https://rehg.org/))
 
 \* Equal Contribution
 
